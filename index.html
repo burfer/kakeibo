@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>支出の4象限</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;700&display=swap">
+<style>
+:root{
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+  --bg:#F5F6F3; --paper:#FFFFFF; --ink:#1E2430; --mute:#6B7280; --line:#DCDFD9;
+  --rf:#2F5D8A; --rv:#3C8A6E; --if:#9A6A2A; --iv:#8A3C5C; --x:#9AA0A6;
+  --up:#B3261E; --down:#2E7D5B; --tint:#EEF0EA;
+}
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){
+  --bg:#151920; --paper:#1E232C; --ink:#E7EAEF; --mute:#9AA3B2; --line:#2F3641;
+  --rf:#7FB0E0; --rv:#7FCBAA; --if:#D9A864; --iv:#D98AAA; --x:#7A818B;
+  --up:#F28B82; --down:#7FCBAA; --tint:#262C36;
+}}
+:root[data-theme="dark"]{
+  --bg:#151920; --paper:#1E232C; --ink:#E7EAEF; --mute:#9AA3B2; --line:#2F3641;
+  --rf:#7FB0E0; --rv:#7FCBAA; --if:#D9A864; --iv:#D98AAA; --x:#7A818B;
+  --up:#F28B82; --down:#7FCBAA; --tint:#262C36;
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"BIZ UDPGothic","Hiragino Sans","Noto Sans JP",system-ui,sans-serif;font-size:15px;line-height:1.55;-webkit-text-size-adjust:100%}
+main{max-width:640px;margin:0 auto;padding:16px 16px 48px}
+h1{font-size:20px;font-weight:700;margin:4px 0 2px}
+.sub{color:var(--mute);font-size:13px;margin:0 0 16px}
+section{margin-top:24px}
+h2{font-size:15px;font-weight:700;margin:0 0 8px;display:flex;justify-content:space-between;align-items:baseline}
+h2 small{font-weight:400;color:var(--mute);font-size:12px}
+button,select,label.btn{font:inherit;color:inherit}
+.btn{display:inline-block;background:var(--ink);color:var(--bg);border:0;border-radius:8px;padding:10px 16px;font-weight:700;cursor:pointer}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.btn:focus-visible,select:focus-visible,.chip:focus-visible,.quad:focus-visible{outline:2px solid var(--rf);outline-offset:2px}
+input[type=file]{position:absolute;width:1px;height:1px;opacity:0}
+.status{font-size:13px;color:var(--mute);margin-top:8px;min-height:1.2em}
+.status.err{color:var(--up)}
+.months{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;-webkit-overflow-scrolling:touch}
+.chip{flex:0 0 auto;border:1px solid var(--line);background:var(--paper);border-radius:999px;padding:6px 12px;font-size:13px;cursor:pointer}
+.chip[aria-pressed=true]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.grid{display:grid;grid-template-columns:auto 1fr 1fr;grid-template-rows:auto 1fr 1fr;gap:6px}
+.axis{color:var(--mute);font-size:12px;display:flex;align-items:center;justify-content:center}
+.axis.v{writing-mode:vertical-rl}
+.quad{background:var(--paper);border:1px solid var(--line);border-left:5px solid var(--c);border-radius:6px;padding:10px 10px 8px;text-align:left;cursor:pointer;min-height:96px;display:flex;flex-direction:column;justify-content:space-between}
+.quad .name{font-size:12px;color:var(--mute)}
+.quad .amt{font-size:22px;font-weight:700;letter-spacing:-.01em;line-height:1.1;margin-top:6px;font-variant-numeric:tabular-nums}
+.quad .amt small{font-size:12px;font-weight:400;margin-left:2px}
+.quad .diff{font-size:12px;margin-top:6px;color:var(--mute);font-variant-numeric:tabular-nums}
+.diff.up{color:var(--up)} .diff.down{color:var(--down)}
+.total{display:flex;justify-content:space-between;align-items:baseline;margin-top:10px;padding:10px 4px;border-top:1px solid var(--line)}
+.total b{font-size:18px;font-variant-numeric:tabular-nums}
+.detail{background:var(--paper);border:1px solid var(--line);border-radius:6px;margin-top:8px;overflow:hidden}
+.detail .head{padding:10px 12px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;font-weight:700}
+.row{display:flex;justify-content:space-between;gap:8px;padding:8px 12px;border-bottom:1px solid var(--line);font-size:14px}
+.row:last-child{border-bottom:0}
+.row .k{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row .k span{color:var(--mute)}
+.row .v{font-variant-numeric:tabular-nums;white-space:nowrap}
+.row .d{font-size:12px;color:var(--mute);margin-left:6px}
+.unmapped{background:var(--paper);border:1px solid var(--line);border-radius:6px}
+.maprow{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;padding:8px 12px;border-bottom:1px solid var(--line)}
+.maprow:last-child{border-bottom:0}
+.maprow .k{font-size:14px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.maprow .k span{color:var(--mute)}
+.maprow .n{font-size:12px;color:var(--mute);display:block}
+select{background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:7px 8px;font-size:14px;max-width:140px}
+select.q-RF{border-color:var(--rf)} select.q-RV{border-color:var(--rv)} select.q-IF{border-color:var(--if)} select.q-IV{border-color:var(--iv)}
+.empty{color:var(--mute);font-size:14px;padding:14px 12px}
+.chart{background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:10px 8px 4px;overflow-x:auto}
+.legend{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12px;color:var(--mute);margin-top:6px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px;vertical-align:-1px}
+.trend{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px;font-variant-numeric:tabular-nums}
+.trend th,.trend td{padding:6px 6px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+.trend th:first-child,.trend td:first-child{text-align:left}
+.trend thead th{color:var(--mute);font-weight:400}
+.wrap{overflow-x:auto}
+details summary{cursor:pointer;color:var(--mute);font-size:13px}
+.hint{font-size:13px;color:var(--mute);margin:6px 0 0}
+@media (prefers-reduced-motion:no-preference){.quad{transition:transform .12s}.quad:active{transform:scale(.985)}}
+</style>
+</head>
+<body>
+<main>
+  <h1>支出の4象限</h1>
+  <p class="sub">マネーフォワードのCSVを取り込み、定期／不定期・定額／非定額で集計します</p>
+
+  <section id="import">
+    <label class="btn" for="file">CSVを取り込む</label>
+    <input id="file" type="file" accept=".csv,text/csv" multiple>
+    <div class="status" id="status">保存されたデータを読み込んでいます…</div>
+  </section>
+
+  <section id="monthsec" hidden>
+    <h2>月 <small id="monthmeta"></small></h2>
+    <div class="months" id="months"></div>
+  </section>
+
+  <section id="quadsec" hidden>
+    <h2>4象限 <small>タップで内訳</small></h2>
+    <div class="grid" id="grid"></div>
+    <div class="total"><span>合計</span><b id="total"></b></div>
+    <div id="detail"></div>
+  </section>
+
+  <section id="unmappedsec" hidden>
+    <h2>未分類の科目 <small>象限を選ぶと対応表に追加されます</small></h2>
+    <div class="unmapped" id="unmapped"></div>
+  </section>
+
+  <section id="trendsec" hidden>
+    <h2>月ごとの推移</h2>
+    <div class="chart" id="chart"></div>
+    <div class="wrap"><table class="trend" id="trendtable"></table></div>
+  </section>
+
+  <section id="mapsec" hidden>
+    <h2>対応表 <small id="mapmeta"></small></h2>
+    <details><summary>すべての科目を表示・編集</summary>
+      <div class="unmapped" id="mapall" style="margin-top:8px"></div>
+    </details>
+    <p class="hint">「振替」「収入」「計算対象外」の行はCSV取り込み時に除外しています。</p>
+  </section>
+</main>
+
+<script>
+(function(){
+"use strict";
+const Q = {
+  RF:{name:"定期定額",   color:"var(--rf)"},
+  RV:{name:"定期非定額", color:"var(--rv)"},
+  IF:{name:"不定期定額", color:"var(--if)"},
+  IV:{name:"不定期非定額",color:"var(--iv)"},
+  X: {name:"集計対象外", color:"var(--x)"}
+};
+const ORDER = ["RF","RV","IF","IV"];
+const $ = s => document.querySelector(s);
+const yen = n => "¥" + Math.round(n).toLocaleString("ja-JP");
+const key = (c,s) => c + "｜" + s;
+const safeId = m => m.replace("/","-");
+
+let db = null;
+let mapping = {};              // key -> RF|RV|IF|IV|X
+let months = {};               // "YYYY-MM" -> {rows:[...]}
+let current = null;
+let openQuad = null;
+const LS = "kakeibo4q";
+
+function setStatus(t, err){ const e=$("#status"); e.textContent=t; e.classList.toggle("err",!!err); }
+
+/* ---------- storage ---------- */
+function loadLocal(){
+  try{ const j=JSON.parse(localStorage.getItem(LS)||"null"); if(j){ mapping=j.mapping||{}; months=j.months||{}; } }catch(e){}
+}
+function saveLocal(){
+  try{ localStorage.setItem(LS, JSON.stringify({mapping,months})); }catch(e){}
+}
+async function loadDb(){
+  if(!db) return;
+  const m = await db.doc("data/mapping").get();
+  if(m.exists) mapping = m.data().items || {};
+  const snap = await db.collection("months").get();
+  snap.docs.forEach(d => { const b=d.data(); if(b && b.rows) months[b.month] = {rows:b.rows}; });
+}
+async function persistMapping(){
+  saveLocal();
+  if(db){ try{ await db.doc("data/mapping").set({items:mapping, updatedAt:new Date().toISOString()}); }
+          catch(e){ setStatus("対応表の保存に失敗しました（端末内には保存済み）", true); } }
+}
+async function persistMonth(m){
+  saveLocal();
+  if(db){ try{ await db.collection("months").doc(safeId(m)).set({month:m, rows:months[m].rows, updatedAt:new Date().toISOString()}); }
+          catch(e){ setStatus(m+" の保存に失敗しました（端末内には保存済み）", true); } }
+}
+
+/* ---------- CSV ---------- */
+function decode(buf){
+  try{ return new TextDecoder("utf-8",{fatal:true}).decode(buf).replace(/^\uFEFF/,""); }
+  catch(e){ return new TextDecoder("shift_jis").decode(buf); }
+}
+function parseCSV(text){
+  const rows=[]; let row=[], f="", q=false;
+  for(let i=0;i<text.length;i++){
+    const c=text[i];
+    if(q){ if(c==='"'){ if(text[i+1]==='"'){f+='"';i++;} else q=false; } else f+=c; }
+    else if(c==='"') q=true;
+    else if(c===','){ row.push(f); f=""; }
+    else if(c==='\n'){ row.push(f); rows.push(row); row=[]; f=""; }
+    else if(c!=='\r') f+=c;
+  }
+  if(f!==""||row.length){ row.push(f); rows.push(row); }
+  return rows;
+}
+function importRows(table){
+  const head = table[0]; const idx = n => head.findIndex(h => h.replace(/\s/g,"").startsWith(n));
+  const I = {calc:idx("計算対象"), date:idx("日付"), name:idx("内容"), amt:idx("金額"), cat:idx("大項目"), sub:idx("中項目"), tr:idx("振替"), id:idx("ID")};
+  if(I.date<0||I.amt<0||I.cat<0) throw new Error("マネーフォワードの形式ではないようです（日付・金額・大項目の列が見つかりません）");
+  const touched = new Set(); let added=0, skipped=0;
+  for(const r of table.slice(1)){
+    if(r.length<3) continue;
+    const amt = Number(String(r[I.amt]).replace(/[,"]/g,""));
+    if(!(amt<0)) { skipped++; continue; }
+    if(I.calc>=0 && r[I.calc]!=="1") { skipped++; continue; }
+    if(I.tr>=0 && r[I.tr]==="1") { skipped++; continue; }
+    const d = r[I.date]; const m = d.slice(0,7).replace("/","-");
+    if(!/^\d{4}-\d{2}$/.test(m)) continue;
+    const id = I.id>=0 && r[I.id] ? r[I.id] : d+"|"+r[I.name]+"|"+amt;
+    months[m] = months[m] || {rows:[]};
+    const list = months[m].rows;
+    const k = list.findIndex(x => x.id===id);
+    const row = {id, d, name:r[I.name]||"", amt:-amt, cat:r[I.cat]||"", sub:(I.sub>=0?r[I.sub]:"")||""};
+    if(k>=0) list[k]=row; else { list.push(row); added++; }
+    touched.add(m);
+  }
+  return {touched, added, skipped};
+}
+$("#file").addEventListener("change", async ev => {
+  const files=[...ev.target.files]; if(!files.length) return;
+  setStatus("取り込み中…");
+  try{
+    let added=0; const touched=new Set();
+    for(const f of files){
+      const res = importRows(parseCSV(decode(await f.arrayBuffer())));
+      added+=res.added; res.touched.forEach(m=>touched.add(m));
+    }
+    for(const m of touched) await persistMonth(m);
+    const ms=[...touched].sort();
+    current = ms[ms.length-1] || current;
+    setStatus(`${added}件を追加しました（${ms.length}か月分）`);
+    render();
+  }catch(e){ setStatus(e.message||"取り込みに失敗しました", true); }
+  ev.target.value="";
+});
+
+/* ---------- aggregation ---------- */
+function agg(m){
+  const out={RF:0,RV:0,IF:0,IV:0,X:0,total:0}; const by={RF:{},RV:{},IF:{},IV:{},X:{}}; const un={};
+  for(const r of (months[m]?months[m].rows:[])){
+    const k=key(r.cat,r.sub); const q=mapping[k];
+    if(!q){ un[k]=(un[k]||0)+r.amt; continue; }
+    out[q]+=r.amt; by[q][k]=(by[q][k]||0)+r.amt;
+    if(q!=="X") out.total+=r.amt;
+  }
+  return {out,by,un};
+}
+function prevMonth(m){ const ms=Object.keys(months).sort(); const i=ms.indexOf(m); return i>0?ms[i-1]:null; }
+function diffHtml(cur, prev){
+  if(prev==null) return `<div class="diff">先月データなし</div>`;
+  const d=cur-prev; const cls=d>0?"up":d<0?"down":"";
+  return `<div class="diff ${cls}">先月比 ${d>0?"+":""}${yen(d)}</div>`;
+}
+
+/* ---------- render ---------- */
+function render(){
+  const ms=Object.keys(months).sort();
+  const has=ms.length>0;
+  ["#monthsec","#quadsec","#unmappedsec","#trendsec","#mapsec"].forEach(s=>$(s).hidden=!has);
+  if(!has){ return; }
+  if(!current||!months[current]) current=ms[ms.length-1];
+
+  $("#months").innerHTML = ms.map(m=>`<button class="chip" aria-pressed="${m===current}" data-m="${m}">${m.replace("-","/")}</button>`).join("");
+  $("#months").querySelectorAll(".chip").forEach(b=>b.onclick=()=>{current=b.dataset.m;openQuad=null;render();});
+  $("#monthmeta").textContent = `${months[current].rows.length}件`;
+
+  const a=agg(current), pm=prevMonth(current), pa=pm?agg(pm):null;
+  const cell = q => `<button class="quad" style="--c:${Q[q].color}" data-q="${q}" aria-expanded="${openQuad===q}">
+      <div class="name">${Q[q].name}</div>
+      <div><div class="amt">${yen(a.out[q])}</div>${diffHtml(a.out[q], pa?pa.out[q]:null)}</div></button>`;
+  $("#grid").innerHTML = `<div></div><div class="axis">定額</div><div class="axis">非定額</div>
+     <div class="axis v">定期</div>${cell("RF")}${cell("RV")}
+     <div class="axis v">不定期</div>${cell("IF")}${cell("IV")}`;
+  $("#grid").querySelectorAll(".quad").forEach(b=>b.onclick=()=>{openQuad=openQuad===b.dataset.q?null:b.dataset.q;render();});
+  const unTotal=Object.values(a.un).reduce((s,v)=>s+v,0);
+  $("#total").textContent = yen(a.total) + (unTotal?`（未分類 ${yen(unTotal)} は含まず）`:"");
+
+  const det=$("#detail");
+  if(openQuad){
+    const items=Object.entries(a.by[openQuad]).sort((x,y)=>y[1]-x[1]);
+    det.innerHTML = `<div class="detail"><div class="head"><span>${Q[openQuad].name}の内訳</span><span>${yen(a.out[openQuad])}</span></div>` +
+      (items.length? items.map(([k,v])=>{ const [c,s]=k.split("｜"); const pv=pa?(pa.by[openQuad][k]||0):null;
+        const d=pv==null?"":` <span class="d">${(v-pv)>0?"+":""}${yen(v-pv)}</span>`;
+        return `<div class="row"><span class="k">${c}<span> ＞ ${s}</span></span><span class="v">${yen(v)}${d}</span></div>`; }).join("")
+      : `<div class="empty">この月の該当支出はありません</div>`) + `</div>`;
+  } else det.innerHTML="";
+
+  const unKeys=Object.entries(a.un).sort((x,y)=>y[1]-x[1]);
+  $("#unmappedsec").hidden = unKeys.length===0;
+  $("#unmapped").innerHTML = unKeys.map(([k,v])=>mapRow(k, `${yen(v)}・この月`)).join("");
+  bindSelects($("#unmapped"));
+
+  renderTrend(ms);
+  renderMapAll();
+}
+function mapRow(k, note){
+  const [c,s]=k.split("｜"); const q=mapping[k]||"";
+  return `<div class="maprow"><span class="k">${c}<span> ＞ ${s}</span><span class="n">${note}</span></span>
+    <select data-k="${k}" class="q-${q}"><option value="">選ぶ</option>${Object.keys(Q).map(x=>`<option value="${x}" ${x===q?"selected":""}>${Q[x].name}</option>`).join("")}</select></div>`;
+}
+function bindSelects(root){
+  root.querySelectorAll("select").forEach(sel=>sel.onchange=async ()=>{
+    const k=sel.dataset.k; if(sel.value) mapping[k]=sel.value; else delete mapping[k];
+    await persistMapping(); render();
+  });
+}
+function renderMapAll(){
+  const keys=new Set(Object.keys(mapping));
+  Object.values(months).forEach(m=>m.rows.forEach(r=>keys.add(key(r.cat,r.sub))));
+  const list=[...keys].sort((a,b)=>a.localeCompare(b,"ja"));
+  $("#mapmeta").textContent=`${Object.keys(mapping).length} / ${list.length} 科目`;
+  $("#mapall").innerHTML = list.map(k=>mapRow(k, mapping[k]?"":"未分類")).join("");
+  bindSelects($("#mapall"));
+}
+function renderTrend(ms){
+  const data=ms.map(m=>({m,a:agg(m).out}));
+  const max=Math.max(1,...data.map(d=>d.a.total));
+  const W=Math.max(300, ms.length*44+40), H=180, pad={l:8,r:8,t:12,b:22}, bw=28;
+  const ch=H-pad.t-pad.b;
+  let svg=`<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="月ごとの象限別支出">`;
+  data.forEach((d,i)=>{
+    const x=pad.l+i*44+8; let y=H-pad.b;
+    ORDER.forEach(q=>{ const h=d.a[q]/max*ch; if(h>0){ y-=h; svg+=`<rect x="${x}" y="${y}" width="${bw}" height="${h}" fill="${Q[q].color}" />`; } });
+    svg+=`<text x="${x+bw/2}" y="${H-6}" font-size="10" text-anchor="middle" fill="var(--mute)">${d.m.slice(5)}月</text>`;
+    svg+=`<text x="${x+bw/2}" y="${y-3}" font-size="9" text-anchor="middle" fill="var(--mute)">${Math.round(d.a.total/1000)}k</text>`;
+  });
+  svg+=`</svg>`;
+  $("#chart").innerHTML = svg + `<div class="legend">${ORDER.map(q=>`<span><i style="background:${Q[q].color}"></i>${Q[q].name}</span>`).join("")}</div>`;
+  $("#trendtable").innerHTML = `<thead><tr><th>月</th>${ORDER.map(q=>`<th>${Q[q].name}</th>`).join("")}<th>合計</th></tr></thead><tbody>` +
+    data.map(d=>`<tr><td>${d.m.replace("-","/")}</td>${ORDER.map(q=>`<td>${yen(d.a[q])}</td>`).join("")}<td><b>${yen(d.a.total)}</b></td></tr>`).join("") + `</tbody>`;
+}
+
+/* ---------- boot ---------- */
+loadLocal(); render();
+(async ()=>{
+  try{ db = await (window.claude && window.claude.use ? window.claude.use("db") : Promise.resolve(null)); }catch(e){ db=null; }
+  if(db){
+    try{ await loadDb(); saveLocal(); setStatus(Object.keys(months).length?"アカウントに保存されたデータを読み込みました":"まだデータがありません。CSVを取り込んでください"); }
+    catch(e){ setStatus("保存データの読み込みに失敗しました（端末内のデータを表示）", true); }
+  } else {
+    setStatus(Object.keys(months).length?"端末内のデータを表示しています":"CSVを取り込んでください");
+  }
+  render();
+})();
+})();
+</script>
+</body>
+</html>
